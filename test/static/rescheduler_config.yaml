@@ -1,0 +1,49 @@
+# Copyright 2024 The Godel Rescheduler Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: godelrescheduler.config.kubewharf.io/__internal
+kind: GodelReschedulerConfiguration
+healthzBindAddress: 0.0.0.0:{{BindPort}}         # This should be 0.0.0.0:11251 by default
+metricsBindAddress: 0.0.0.0:{{BindPort}}         # This should be 0.0.0.0:11251 by default
+profile:
+  reschedulerPolicyConfigs:
+  - policyTrigger:
+      signal: 12
+    detector:
+      name: BinPacking
+      args:
+        resourceItems:
+        - resource: cpu
+          weight: 1
+        thresholdPercentage: 0.5
+      detectorTrigger:
+        signal: 12
+    algorithm:
+      name: BinPacking
+      checkPolicies:
+      - Protection
+    failureRatioThreshold: 0.3
+  - detector:
+      name: Protection
+    algorithm:
+      name: Protection
+  - detector:
+      name: Throttle
+    algorithm:
+      name: Throttle
+      args:
+        throttleItems:
+        - labelSelectorKey: psm
+          throttleDuration: 5m
+          throttleValue: 1
