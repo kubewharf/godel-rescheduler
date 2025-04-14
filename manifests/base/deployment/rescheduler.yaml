@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rescheduler
+  namespace: godel-system
+  labels:
+    component: rescheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: godel-rescheduler
+  template:
+    metadata:
+      labels:
+        app: godel-rescheduler
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      serviceAccountName: godel-rescheduler
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      containers:
+        - name: rescheduler
+          image: godel-rescheduler:latest
+          imagePullPolicy: Never
+          command: ["/usr/local/bin/godel-rescheduler"]
+          args:
+            - "--leader-elect=false"
+            - "--v=4"
+            - "--port=0"
+            - "--secure-port=12259"
+            - "--dry-run=false"
+            - "--scheduler-config=/scheduler_config/scheduler.config"
+            - "--rescheduler-config=/rescheduler_config/rescheduler.config"
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1G
+            requests:
+              cpu: "1"
+              memory: 1G
+          volumeMounts:
+            - mountPath: /scheduler_config
+              name: scheduler-config
+            - mountPath: /rescheduler_config
+              name: rescheduler-config
+      volumes:
+        - name: scheduler-config
+          configMap:
+            name: godel-scheduler-config
+            items:
+            - key: godel-scheduler-config
+              path: scheduler.config
+        - name: rescheduler-config
+          configMap:
+            name: godel-rescheduler-config
+            items:
+            - key: godel-rescheduler-config
+              path: rescheduler.config

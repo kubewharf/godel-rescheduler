@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: godel-rescheduler-config
+  namespace: godel-system
+data:
+  godel-rescheduler-config: |+
+    apiVersion: godelrescheduler.config.kubewharf.io/__internal
+    kind: GodelReschedulerConfiguration
+    profile:
+      reschedulerPolicyConfigs:
+      - policyTrigger:
+          period: 5m
+          signal: 12
+        detector:
+          name: BinPacking
+          args:
+            resourceItems:
+            - resource: cpu
+              weight: 1
+            thresholdPercentage: 0.5
+          detectorTrigger:
+            signal: 12
+        algorithm:
+          name: BinPacking
+          args:
+            resourceItems:
+            - resource: cpu
+              weight: 1
+        failureRatioThreshold: 0.3
